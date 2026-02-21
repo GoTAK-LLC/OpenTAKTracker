@@ -76,6 +76,14 @@ fun MainScreen(
     var showEnrollment by remember { mutableStateOf(initialEnrollmentParams != null) }
     var enrollmentParams by remember { mutableStateOf(initialEnrollmentParams) }
     var showPermissionRationale by remember { mutableStateOf(false) }
+
+    // React to enrollment params arriving via URI (handles onNewIntent when app is already running)
+    LaunchedEffect(initialEnrollmentParams) {
+        if (initialEnrollmentParams != null) {
+            enrollmentParams = initialEnrollmentParams
+            showEnrollment = true
+        }
+    }
     var showPinDialog by remember { mutableStateOf(false) }
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 

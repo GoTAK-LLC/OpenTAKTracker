@@ -31,6 +31,8 @@ class TrackingForegroundService : Service() {
 
     private val binder = TrackingBinder()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var sosDetector: HardwareSOSDetector? = null
+    private var sosSettingJob: Job? = null
 
     inner class TrackingBinder : Binder() {
         val service: TrackingForegroundService get() = this@TrackingForegroundService
@@ -87,6 +89,20 @@ class TrackingForegroundService : Service() {
 
         trackerEngine.start()
 
+        // Hardware SOS detector - observe the setting and start/stop accordingly
+        val detector = HardwareSOSDetector(
+            context = this@TrackingForegroundService,
+            settings = settings,
+            logRepository = logRepository,
+            scope = scope
+        )
+        sosDetector = detector
+        sosSettingJob = scope.launch {
+            settings.hardwareSOSEnabled.collect { enabled ->
+                if (enabled) detector.start() else detector.stop()
+            }
+        }
+
         // Update notification periodically
         scope.launch {
             while (isActive) {
@@ -102,6 +118,9 @@ class TrackingForegroundService : Service() {
         locationManager.stopLocationUpdates()
         connectionManager.disconnect()
         connectionManager.stopNetworkMonitoring()
+        sosSettingJob?.cancel()
+        sosDetector?.stop()
+        sosDetector = null
         scope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

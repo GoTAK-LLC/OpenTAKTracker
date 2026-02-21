@@ -176,6 +176,7 @@ class TrackerViewModel @Inject constructor(
     fun updateKeepScreenOn(value: Boolean) = viewModelScope.launch { settings.setKeepScreenOn(value) }
     fun updateTrustAllCerts(value: Boolean) = viewModelScope.launch { settings.setTrustAllCerts(value) }
     fun updateStartOnBoot(value: Boolean) = viewModelScope.launch { settings.setStartOnBoot(value) }
+    fun updateHardwareSOSEnabled(enabled: Boolean) = viewModelScope.launch { settings.setHardwareSOSEnabled(enabled) }
 
     // --- Lock ---
     fun setLockPin(pin: String) = viewModelScope.launch { settings.setLockPin(pin) }

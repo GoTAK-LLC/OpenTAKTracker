@@ -51,6 +51,7 @@ class SettingsRepository @Inject constructor(
         val LOCK_PIN = stringPreferencesKey("lock_pin")
         val IS_LOCKED = booleanPreferencesKey("is_locked")
         val START_ON_BOOT = booleanPreferencesKey("start_on_boot")
+        val HARDWARE_SOS_ENABLED = booleanPreferencesKey("hardware_sos_enabled")
     }
 
     // Device UID - stable per device
@@ -97,6 +98,7 @@ class SettingsRepository @Inject constructor(
     val lockPin: Flow<String> = dataStore.data.map { it[Keys.LOCK_PIN] ?: "" }
     val isLocked: Flow<Boolean> = dataStore.data.map { it[Keys.IS_LOCKED] ?: false }
     val startOnBoot: Flow<Boolean> = dataStore.data.map { it[Keys.START_ON_BOOT] ?: false }
+    val hardwareSOSEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.HARDWARE_SOS_ENABLED] ?: false }
 
     // Server configs with migration from legacy single-server keys
     val serverConfigs: Flow<List<ServerConfig>> = dataStore.data.map { prefs ->
@@ -155,6 +157,7 @@ class SettingsRepository @Inject constructor(
     suspend fun setLockPin(value: String) { dataStore.edit { it[Keys.LOCK_PIN] = value } }
     suspend fun setIsLocked(value: Boolean) { dataStore.edit { it[Keys.IS_LOCKED] = value } }
     suspend fun setStartOnBoot(value: Boolean) { dataStore.edit { it[Keys.START_ON_BOOT] = value } }
+    suspend fun setHardwareSOSEnabled(value: Boolean) { dataStore.edit { it[Keys.HARDWARE_SOS_ENABLED] = value } }
 
     suspend fun clearConnection() {
         dataStore.edit {

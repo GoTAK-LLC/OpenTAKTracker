@@ -108,6 +108,11 @@ class CSREnrollmentManager @Inject constructor(
                 settings.setServerUrl(serverUrl)
                 settings.setServerPort(params.serverPort)
 
+                // Apply user settings from URI if provided
+                if (params.callsign.isNotBlank()) settings.setCallsign(params.callsign)
+                if (params.team.isNotBlank()) settings.setTeam(params.team)
+                if (params.role.isNotBlank()) settings.setRole(params.role)
+
                 _status.value = EnrollmentStatus.SUCCEEDED
                 _statusMessage.value = "Enrollment complete!"
                 logRepository.info("Enrollment", "Enrollment succeeded for $serverUrl")

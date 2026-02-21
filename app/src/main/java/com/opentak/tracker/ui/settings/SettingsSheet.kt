@@ -32,6 +32,7 @@ fun SettingsSheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
     val udpPort by viewModel.settings.udpPort.collectAsState(initial = "6969")
     val keepScreenOn by viewModel.settings.keepScreenOn.collectAsState(initial = true)
     val startOnBoot by viewModel.settings.startOnBoot.collectAsState(initial = false)
+    val hardwareSOSEnabled by viewModel.settings.hardwareSOSEnabled.collectAsState(initial = false)
     val trustAll by viewModel.settings.trustAllCerts.collectAsState(initial = false)
     val lockPin by viewModel.lockPin.collectAsState()
 
@@ -192,6 +193,18 @@ fun SettingsSheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
                         Text("Clear PIN")
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            SwitchSetting("Hardware SOS (5x Volume Key)", hardwareSOSEnabled) {
+                viewModel.updateHardwareSOSEnabled(it)
+            }
+            if (hardwareSOSEnabled) {
+                Text(
+                    "Press volume up/down 5 times within 3 seconds to trigger a 911 emergency alert. Works with screen off while tracking is active.",
+                    color = TextSecondary,
+                    fontSize = 13.sp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

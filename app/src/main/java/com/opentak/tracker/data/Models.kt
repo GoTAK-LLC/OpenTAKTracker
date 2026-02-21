@@ -50,6 +50,9 @@ data class EnrollmentParameters(
     val password: String = "",
     val csrPort: String = "",
     val secureApiPort: String = "",
+    val callsign: String = "",
+    val team: String = "",
+    val role: String = "",
     val shouldAutoSubmit: Boolean = false,
     val isValid: Boolean = true,
     val errorMessage: String = ""

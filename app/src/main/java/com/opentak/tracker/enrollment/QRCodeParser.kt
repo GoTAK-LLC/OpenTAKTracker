@@ -63,6 +63,9 @@ object QRCodeParser {
         val port = uri.getQueryParameter("port") ?: Constants.DEFAULT_STREAMING_PORT
         val csrPort = uri.getQueryParameter("csrPort") ?: ""
         val secureApiPort = uri.getQueryParameter("secureApiPort") ?: ""
+        val callsign = uri.getQueryParameter("callsign") ?: ""
+        val team = uri.getQueryParameter("team") ?: ""
+        val role = uri.getQueryParameter("role") ?: ""
 
         if (username.isBlank() || credential.isBlank()) {
             // No credentials — just fill in the host, user enters creds manually
@@ -71,7 +74,10 @@ object QRCodeParser {
                 serverPort = port,
                 protocol = "ssl",
                 csrPort = csrPort,
-                secureApiPort = secureApiPort
+                secureApiPort = secureApiPort,
+                callsign = callsign,
+                team = team,
+                role = role
             )
         }
 
@@ -84,6 +90,9 @@ object QRCodeParser {
             password = credential,
             csrPort = csrPort,
             secureApiPort = secureApiPort,
+            callsign = callsign,
+            team = team,
+            role = role,
             shouldAutoSubmit = true
         )
     }
