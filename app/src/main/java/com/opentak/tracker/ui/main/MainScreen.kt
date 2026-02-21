@@ -380,13 +380,37 @@ fun MainScreen(
                 }
             }
 
-            // Server status badge
-            ServerStatusBadge(
-                summary = connectionSummary,
-                state = connectionState,
-                lastTxTime = lastTxTime,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-            )
+            // ATAK pause indicator + server status badge
+            Column(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                // Poll the volatile pause flag every 2 seconds
+                var isPaused by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        isPaused = viewModel.isExternallyPaused
+                        kotlinx.coroutines.delay(2000)
+                    }
+                }
+                if (isPaused) {
+                    Text(
+                        text = "Paused (ATAK)",
+                        color = WarningYellow,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .background(PanelBlack.copy(alpha = 0.9f), RoundedCornerShape(5.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                ServerStatusBadge(
+                    summary = connectionSummary,
+                    state = connectionState,
+                    lastTxTime = lastTxTime,
+                    modifier = Modifier
+                )
+            }
 
             // Powered by GoTAK
             val uriHandler = LocalUriHandler.current

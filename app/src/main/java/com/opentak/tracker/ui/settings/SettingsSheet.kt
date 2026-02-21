@@ -1,5 +1,9 @@
 package com.opentak.tracker.ui.settings
 
+import android.app.AppOpsManager
+import android.content.Intent
+import android.os.Process
+import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -7,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +38,7 @@ fun SettingsSheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
     val keepScreenOn by viewModel.settings.keepScreenOn.collectAsState(initial = true)
     val startOnBoot by viewModel.settings.startOnBoot.collectAsState(initial = false)
     val hardwareSOSEnabled by viewModel.settings.hardwareSOSEnabled.collectAsState(initial = false)
+    val atakPauseEnabled by viewModel.settings.atakPauseEnabled.collectAsState(initial = false)
     val trustAll by viewModel.settings.trustAllCerts.collectAsState(initial = false)
     val lockPin by viewModel.lockPin.collectAsState()
 
@@ -145,6 +151,43 @@ fun SettingsSheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+            }
+            SwitchSetting("Pause When ATAK Active", atakPauseEnabled) {
+                viewModel.updateAtakPauseEnabled(it)
+            }
+            if (atakPauseEnabled) {
+                val context = LocalContext.current
+                val hasAccess = remember {
+                    try {
+                        val appOps = context.getSystemService(AppOpsManager::class.java)
+                        appOps.unsafeCheckOpNoThrow(
+                            AppOpsManager.OPSTR_GET_USAGE_STATS,
+                            Process.myUid(),
+                            context.packageName
+                        ) == AppOpsManager.MODE_ALLOWED
+                    } catch (_: Exception) { false }
+                }
+                Text(
+                    "Automatically pauses CoT transmission when ATAK is in the foreground to prevent duplicate PLI.",
+                    color = TextSecondary,
+                    fontSize = 13.sp
+                )
+                if (!hasAccess) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Usage Access permission required for app detection.",
+                        color = WarningYellow,
+                        fontSize = 13.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(onClick = {
+                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }) {
+                        Text("Grant Usage Access")
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

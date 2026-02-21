@@ -33,6 +33,8 @@ class TrackingForegroundService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var sosDetector: HardwareSOSDetector? = null
     private var sosSettingJob: Job? = null
+    private var atakDetector: AtakDetector? = null
+    private var atakSettingJob: Job? = null
 
     inner class TrackingBinder : Binder() {
         val service: TrackingForegroundService get() = this@TrackingForegroundService
@@ -103,6 +105,20 @@ class TrackingForegroundService : Service() {
             }
         }
 
+        // ATAK detector - observe the setting and start/stop accordingly
+        val atak = AtakDetector(
+            context = this@TrackingForegroundService,
+            trackerEngine = trackerEngine,
+            logRepository = logRepository,
+            scope = scope
+        )
+        atakDetector = atak
+        atakSettingJob = scope.launch {
+            settings.atakPauseEnabled.collect { enabled ->
+                if (enabled) atak.start() else atak.stop()
+            }
+        }
+
         // Update notification periodically
         scope.launch {
             while (isActive) {
@@ -121,6 +137,9 @@ class TrackingForegroundService : Service() {
         sosSettingJob?.cancel()
         sosDetector?.stop()
         sosDetector = null
+        atakSettingJob?.cancel()
+        atakDetector?.stop()
+        atakDetector = null
         scope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

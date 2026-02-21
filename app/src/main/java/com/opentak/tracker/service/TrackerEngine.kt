@@ -27,6 +27,9 @@ class TrackerEngine @Inject constructor(
     var isRunning: Boolean = false
         private set
 
+    @Volatile
+    var isExternallyPaused: Boolean = false
+
     fun start() {
         if (isRunning) return
         isRunning = true
@@ -57,6 +60,12 @@ class TrackerEngine @Inject constructor(
         val location = locationManager.location.value
         if (!location.isValid) {
             logRepository.warn("Engine", "No valid location, skipping transmit")
+            return
+        }
+
+        // ATAK pause check
+        if (isExternallyPaused) {
+            logRepository.info("Engine", "Paused (ATAK active), skipping transmit")
             return
         }
 

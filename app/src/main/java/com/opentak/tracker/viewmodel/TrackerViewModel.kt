@@ -12,6 +12,7 @@ import com.opentak.tracker.enrollment.CSREnrollmentManager
 import com.opentak.tracker.enrollment.QRCodeParser
 import com.opentak.tracker.security.CertificateStore
 import com.opentak.tracker.service.LocationManagerWrapper
+import com.opentak.tracker.service.TrackerEngine
 import com.opentak.tracker.service.TrackingForegroundService
 import com.opentak.tracker.transport.ConnectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +29,8 @@ class TrackerViewModel @Inject constructor(
     val connectionManager: ConnectionManager,
     val locationManager: LocationManagerWrapper,
     val enrollmentManager: CSREnrollmentManager,
-    val certStore: CertificateStore
+    val certStore: CertificateStore,
+    private val trackerEngine: TrackerEngine
 ) : ViewModel() {
 
     // UI state
@@ -177,6 +179,9 @@ class TrackerViewModel @Inject constructor(
     fun updateTrustAllCerts(value: Boolean) = viewModelScope.launch { settings.setTrustAllCerts(value) }
     fun updateStartOnBoot(value: Boolean) = viewModelScope.launch { settings.setStartOnBoot(value) }
     fun updateHardwareSOSEnabled(enabled: Boolean) = viewModelScope.launch { settings.setHardwareSOSEnabled(enabled) }
+    fun updateAtakPauseEnabled(enabled: Boolean) = viewModelScope.launch { settings.setAtakPauseEnabled(enabled) }
+
+    val isExternallyPaused: Boolean get() = trackerEngine.isExternallyPaused
 
     // --- Lock ---
     fun setLockPin(pin: String) = viewModelScope.launch { settings.setLockPin(pin) }
