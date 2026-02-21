@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenTAK Tracker</string>
+    <string name="notification_channel_id">tracking_channel</string>
+    <string name="notification_channel_name">Location Tracking</string>
+</resources>
