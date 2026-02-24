@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.opentak.tracker.R
+import com.opentak.tracker.cot.CotBuilder
 import com.opentak.tracker.data.LogRepository
 import com.opentak.tracker.data.SettingsRepository
 import com.opentak.tracker.transport.ConnectionManager
@@ -28,6 +29,7 @@ class TrackingForegroundService : Service() {
     @Inject lateinit var locationManager: LocationManagerWrapper
     @Inject lateinit var settings: SettingsRepository
     @Inject lateinit var logRepository: LogRepository
+    @Inject lateinit var cotBuilder: CotBuilder
 
     private val binder = TrackingBinder()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -96,6 +98,9 @@ class TrackingForegroundService : Service() {
             context = this@TrackingForegroundService,
             settings = settings,
             logRepository = logRepository,
+            connectionManager = connectionManager,
+            cotBuilder = cotBuilder,
+            locationManager = locationManager,
             scope = scope
         )
         sosDetector = detector
@@ -132,8 +137,8 @@ class TrackingForegroundService : Service() {
         logRepository.info("Service", "Stopping tracking")
         trackerEngine.stop()
         locationManager.stopLocationUpdates()
-        connectionManager.disconnect()
         connectionManager.stopNetworkMonitoring()
+        connectionManager.disconnect()
         sosSettingJob?.cancel()
         sosDetector?.stop()
         sosDetector = null

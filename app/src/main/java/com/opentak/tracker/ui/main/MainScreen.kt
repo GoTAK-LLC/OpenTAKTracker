@@ -64,7 +64,6 @@ fun MainScreen(
     val compassUnit by viewModel.compassUnit.collectAsState()
     val isTracking by viewModel.isTracking.collectAsState()
     val callsign by viewModel.settings.callsign.collectAsState(initial = "---")
-    val emergencyActive by viewModel.settings.emergencyActive.collectAsState(initial = false)
     val connectionSummary by viewModel.connectionSummary.collectAsState()
     val isLocked by viewModel.isLocked.collectAsState()
     val lockPin by viewModel.lockPin.collectAsState()
@@ -150,7 +149,7 @@ fun MainScreen(
                         Icon(
                             Icons.Default.Warning,
                             contentDescription = "Emergency",
-                            tint = if (emergencyActive) ErrorRed else TextWhite
+                            tint = TextWhite
                         )
                     }
                     IconButton(onClick = { guardedAction { showSettings = true } }) {

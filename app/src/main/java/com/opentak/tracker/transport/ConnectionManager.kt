@@ -69,10 +69,15 @@ class ConnectionManager @Inject constructor(
     private val reconnectAttempts = ConcurrentHashMap<String, Int>()
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
+    @Volatile
+    private var active = false
+
     fun startNetworkMonitoring() {
+        active = true
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                if (!active) return
                 logRepository.info("Network", "Network available")
                 val currentState = state.value
                 if (currentState == ConnectionState.DISCONNECTED || currentState == ConnectionState.FAILED) {
@@ -81,23 +86,12 @@ class ConnectionManager @Inject constructor(
             }
 
             override fun onLost(network: Network) {
+                if (!active) return
                 logRepository.warn("Network", "Network lost")
-                // Schedule reconnect for all connected servers
                 tcpClients.forEach { (serverId, client) ->
                     if (client.isConnected) {
                         updateServerState(serverId, ConnectionState.RECONNECTING)
                         scheduleReconnect(serverId)
-                    }
-                }
-            }
-
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                val currentState = state.value
-                if (currentState == ConnectionState.CONNECTED) {
-                    logRepository.info("Network", "Network capabilities changed, reconnecting all")
-                    scope.launch {
-                        disconnectAll()
-                        connectAll()
                     }
                 }
             }
@@ -119,6 +113,8 @@ class ConnectionManager @Inject constructor(
     }
 
     suspend fun connectAll() {
+        if (!active) return
+
         val configs = settings.serverConfigs.first()
         val enabledConfigs = configs.filter { it.enabled }
 
@@ -143,6 +139,7 @@ class ConnectionManager @Inject constructor(
     }
 
     suspend fun connectServer(config: ServerConfig) {
+        if (!active) return
         updateServerState(config.id, ConnectionState.CONNECTING)
 
         // Create or reuse client
@@ -208,6 +205,7 @@ class ConnectionManager @Inject constructor(
     }
 
     fun disconnect() {
+        active = false
         disconnectAll()
         udpBroadcaster.disconnect()
         _lastError.value = null
@@ -229,6 +227,7 @@ class ConnectionManager @Inject constructor(
     }
 
     private fun scheduleReconnect(serverId: String) {
+        if (!active) return
         reconnectJobs[serverId]?.cancel()
         val attempt = reconnectAttempts.getOrDefault(serverId, 0)
         val delay = calculateBackoffDelay(attempt)

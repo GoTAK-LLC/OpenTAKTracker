@@ -4,7 +4,6 @@ import android.location.Location
 import com.opentak.tracker.cot.CotBuilder
 import com.opentak.tracker.data.*
 import com.opentak.tracker.transport.ConnectionManager
-import com.opentak.tracker.util.Constants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -37,12 +36,7 @@ class TrackerEngine @Inject constructor(
 
         timerJob = scope.launch {
             while (isActive) {
-                val interval = if (settings.emergencyActive.first()) {
-                    Constants.EMERGENCY_BROADCAST_INTERVAL_SECONDS
-                } else {
-                    settings.broadcastInterval.first()
-                }
-
+                val interval = settings.broadcastInterval.first()
                 delay(interval * 1000)
                 transmit()
             }
@@ -82,14 +76,7 @@ class TrackerEngine @Inject constructor(
         val role = settings.role.first()
         val staleMinutes = settings.staleTimeMinutes.first()
 
-        val cotXml = if (settings.emergencyActive.first()) {
-            val emergencyTypeName = settings.emergencyType.first()
-            val emergencyType = EmergencyType.entries.find { it.name == emergencyTypeName }
-                ?: EmergencyType.NineOneOne
-            cotBuilder.buildEmergency(location, uid, callsign, emergencyType, false)
-        } else {
-            cotBuilder.buildPLI(location, uid, callsign, team, role, staleMinutes)
-        }
+        val cotXml = cotBuilder.buildPLI(location, uid, callsign, team, role, staleMinutes)
 
         connectionManager.send(cotXml)
         lastTransmitLocation = location

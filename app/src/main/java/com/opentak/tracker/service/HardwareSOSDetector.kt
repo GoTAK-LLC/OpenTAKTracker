@@ -10,9 +10,11 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.Settings
+import com.opentak.tracker.cot.CotBuilder
 import com.opentak.tracker.data.EmergencyType
 import com.opentak.tracker.data.LogRepository
 import com.opentak.tracker.data.SettingsRepository
+import com.opentak.tracker.transport.ConnectionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -21,6 +23,9 @@ class HardwareSOSDetector(
     private val context: Context,
     private val settings: SettingsRepository,
     private val logRepository: LogRepository,
+    private val connectionManager: ConnectionManager,
+    private val cotBuilder: CotBuilder,
+    private val locationManager: LocationManagerWrapper,
     private val scope: CoroutineScope
 ) {
     companion object {
@@ -88,15 +93,17 @@ class HardwareSOSDetector(
 
     private fun onSOSTriggered() {
         scope.launch {
-            val alreadyActive = settings.emergencyActive.first()
-            if (alreadyActive) {
-                logRepository.info("SOS", "Hardware SOS pressed but emergency already active")
+            val location = locationManager.location.value
+            if (!location.isValid) {
+                logRepository.warn("SOS", "Hardware SOS triggered but no valid location")
                 return@launch
             }
 
-            logRepository.info("SOS", "Hardware SOS triggered! Activating 911 emergency")
-            settings.setEmergencyActive(true)
-            settings.setEmergencyType(EmergencyType.NineOneOne.name)
+            logRepository.info("SOS", "Hardware SOS triggered! Sending 911 emergency alert")
+            val uid = settings.deviceUid
+            val callsign = settings.callsign.first()
+            val cotXml = cotBuilder.buildEmergency(location, uid, callsign, EmergencyType.NineOneOne, false)
+            connectionManager.send(cotXml)
 
             vibrateConfirmation()
         }

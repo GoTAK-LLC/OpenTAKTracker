@@ -17,13 +17,9 @@ import com.opentak.tracker.viewmodel.TrackerViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmergencySheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
-    val emergencyActive by viewModel.settings.emergencyActive.collectAsState(initial = false)
-
     var activateSwitch by remember { mutableStateOf(false) }
     var confirmSwitch by remember { mutableStateOf(false) }
-    var selectedType by remember {
-        mutableStateOf(if (emergencyActive) EmergencyType.Cancel else EmergencyType.NineOneOne)
-    }
+    var selectedType by remember { mutableStateOf(EmergencyType.NineOneOne) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -89,7 +85,7 @@ fun EmergencySheet(viewModel: TrackerViewModel, onDismiss: () -> Unit) {
             // Alert type picker
             Text("Alert Type", color = TextSecondary, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(4.dp))
-            val types = if (emergencyActive) EmergencyType.entries else EmergencyType.entries.filter { it != EmergencyType.Cancel }
+            val types = EmergencyType.entries
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
                 OutlinedTextField(

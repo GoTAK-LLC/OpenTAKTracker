@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.opentak.tracker.cot.CotBuilder
 import com.opentak.tracker.data.*
 import com.opentak.tracker.enrollment.CSREnrollmentManager
 import com.opentak.tracker.enrollment.QRCodeParser
@@ -30,7 +31,8 @@ class TrackerViewModel @Inject constructor(
     val locationManager: LocationManagerWrapper,
     val enrollmentManager: CSREnrollmentManager,
     val certStore: CertificateStore,
-    private val trackerEngine: TrackerEngine
+    private val trackerEngine: TrackerEngine,
+    private val cotBuilder: CotBuilder
 ) : ViewModel() {
 
     // UI state
@@ -130,17 +132,28 @@ class TrackerViewModel @Inject constructor(
 
     fun activateEmergency(type: EmergencyType) {
         viewModelScope.launch {
-            settings.setEmergencyActive(true)
-            settings.setEmergencyType(type.name)
-            logRepository.info("Emergency", "Emergency activated: ${type.displayName}")
+            val location = locationManager.location.value
+            if (!location.isValid) {
+                logRepository.warn("Emergency", "No valid location, cannot send alert")
+                return@launch
+            }
+            val uid = settings.deviceUid
+            val callsign = settings.callsign.first()
+            val cotXml = cotBuilder.buildEmergency(location, uid, callsign, type, false)
+            connectionManager.send(cotXml)
+            logRepository.info("Emergency", "Emergency alert sent: ${type.displayName}")
         }
     }
 
     fun cancelEmergency() {
         viewModelScope.launch {
-            settings.setEmergencyActive(false)
-            settings.setEmergencyType("")
-            logRepository.info("Emergency", "Emergency cancelled")
+            val location = locationManager.location.value
+            if (!location.isValid) return@launch
+            val uid = settings.deviceUid
+            val callsign = settings.callsign.first()
+            val cotXml = cotBuilder.buildEmergency(location, uid, callsign, EmergencyType.NineOneOne, true)
+            connectionManager.send(cotXml)
+            logRepository.info("Emergency", "Emergency cancel sent")
         }
     }
 
